@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Antler Hours">
+<title>Antler Hours</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{background:#111;color:#f0ece4;font-family:Georgia,serif;min-height:100vh;padding-bottom:60px}
+input,select,button,textarea{font-family:Georgia,serif}
+.hidden{display:none!important}
+
+/* HEADER */
+#hdr{background:linear-gradient(135deg,#1a1209,#2d1f0a);border-bottom:1px solid #3d2e14;padding:14px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+#logo{width:34px;height:34px;background:#b8843a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+#hdr-title{font-size:16px;font-weight:bold;color:#e8c87a}
+#hdr-sub{font-size:9px;color:#8a7a5a;letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+#csv-btn{margin-left:auto;background:#2d2010;border:1px solid #3d2e14;border-radius:6px;padding:6px 10px;color:#b8843a;font-size:11px;cursor:pointer;flex-shrink:0}
+#reset-btn{background:#2d2010;border:1px solid #3d2e14;border-radius:6px;padding:6px 11px;color:#b8843a;font-size:13px;cursor:pointer;flex-shrink:0}
+
+/* NAV */
+#nav{display:flex;background:#1a1209;border-bottom:1px solid #2d2010;position:sticky;top:63px;z-index:40}
+.nb{flex:1;padding:11px 6px;font-size:11px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:#6a5a3a}
+.nb.act{color:#e8c87a;border-bottom-color:#e8c87a}
+
+/* SECTIONS */
+.sec{padding:14px}
+.card{background:#1a1209;border:1px solid #2d2010;border-radius:12px;padding:14px;margin-bottom:12px}
+
+/* PROGRESS */
+.ring-wrap{position:relative;display:inline-block}
+.ring-lbl{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.stitle{font-size:10px;color:#8a7a5a;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.flex2{display:flex;gap:10px}
+.pcrd{flex:1;background:#111;border-radius:12px;padding:12px;text-align:center}
+.stat-row{display:flex;justify-content:space-between;font-size:12px;color:#8a7a5a;margin-bottom:6px}
+.sv{color:#e8c87a;font-weight:bold}
+
+/* ALERTS */
+.ag{background:#1a2a1a;border:1px solid #4a7a4a;border-radius:10px;padding:12px;margin-bottom:12px}
+.aw{background:#2a2a1a;border:1px solid #8a7a3a;border-radius:10px;padding:12px;margin-bottom:12px}
+.ad{background:#2a1a1a;border:1px solid #8a3a3a;border-radius:10px;padding:12px;margin-bottom:12px}
+.al{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.ag .al{color:#7aba7a}.aw .al{color:#e8c87a}.ad .al{color:#f08080}
+.at{font-size:12px}
+.ag .at{color:#7aba7a}.aw .at{color:#e8c87a}.ad .at{color:#f08080}
+
+/* TP bars */
+.tpbw{margin-bottom:10px}
+.tpbt{display:flex;justify-content:space-between;margin-bottom:3px}
+.tpn{font-size:12px;font-weight:bold;color:#f0ece4}.tpn.ov{color:#f08080}
+.tpr{font-size:10px;color:#6a5a3a;margin-left:5px}
+.tph{font-size:12px;color:#7a9ab8;font-weight:bold}.tph.ov{color:#f08080}
+.bt{height:4px;background:#2d2010;border-radius:2px;margin-bottom:2px}
+.bf{height:4px;background:#3a5a6a;border-radius:2px;transition:width .5s}
+.bf.ov{background:#8a3a3a}
+.bo{height:3px;background:rgba(232,200,122,.2);border-radius:2px}
+.tps{font-size:10px;color:#6a5a3a;margin-top:2px}.tps.ov{color:#f08080}
+
+/* ── VOICE LOG ── */
+#voice-sec{padding:14px}
+
+/* Person toggle */
+.ptog{display:flex;gap:8px;margin-bottom:20px}
+.pbtn{flex:1;padding:11px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;font-size:14px;font-family:Georgia,serif;transition:all .2s}
+.pbtn.on{background:#b8843a;color:#1a1209}
+.pbtn.off{background:#2d2010;color:#8a7a5a}
+
+/* Big mic button */
+#mic-area{text-align:center;margin:10px 0 20px}
+#mic-btn{width:110px;height:110px;border-radius:50%;border:none;cursor:pointer;font-size:42px;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;background:linear-gradient(135deg,#2d1f0a,#3d2e14);box-shadow:0 0 0 0 rgba(184,132,58,0)}
+#mic-btn.idle{background:linear-gradient(135deg,#2d1f0a,#3d2e14)}
+#mic-btn.listening{background:linear-gradient(135deg,#6a2020,#8a3a3a);animation:pulse 1.2s infinite}
+#mic-btn.processing{background:linear-gradient(135deg,#1a3a1a,#2a5a2a)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,80,80,.5)}70%{box-shadow:0 0 0 20px rgba(240,80,80,0)}100%{box-shadow:0 0 0 0 rgba(240,80,80,0)}}
+#mic-hint{font-size:12px;color:#8a7a5a;margin-top:8px}
+#transcript-box{background:#0d0d0d;border:1px solid #3d2e14;border-radius:10px;padding:12px;min-height:60px;font-size:14px;color:#f0ece4;margin-bottom:14px;line-height:1.5;white-space:pre-wrap}
+#transcript-box.placeholder{color:#4a3a2a}
+
+/* Parsed preview */
+#parsed-preview{background:#1a2a1a;border:1px solid #3a5a3a;border-radius:10px;padding:12px;margin-bottom:14px}
+#parsed-preview .pp-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+#parsed-preview .pp-label{color:#8a7a5a}
+#parsed-preview .pp-val{color:#e8c87a;font-weight:bold;text-align:right;flex:1;margin-left:10px}
+
+/* Edit fields */
+#edit-area{margin-bottom:14px}
+.fl{display:block;font-size:10px;color:#8a7a5a;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;margin-top:10px}
+input[type=text],input[type=number],input[type=date],select{width:100%;background:#0d0d0d;border:1px solid #3d2e14;border-radius:8px;padding:9px 12px;color:#f0ece4;font-size:14px;appearance:none;-webkit-appearance:none}
+input::placeholder{color:#4a3a2a}
+
+.btn-log{width:100%;background:linear-gradient(135deg,#b8843a,#e8c87a);border:none;border-radius:10px;padding:14px;color:#1a1209;font-size:15px;font-weight:bold;cursor:pointer;margin-top:4px}
+.btn-log:disabled{background:#2d2010;color:#5a4a2a;cursor:default}
+.btn-t{width:100%;background:linear-gradient(135deg,#3a4a6a,#5a7a9a);border:none;border-radius:10px;padding:14px;color:#f0ece4;font-size:15px;font-weight:bold;cursor:pointer;margin-top:4px}
+
+/* Tab row for 3rd party */
+.tab-row{display:flex;gap:8px;margin-bottom:12px}
+.tab-btn{flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;font-weight:bold;font-size:12px;font-family:Georgia,serif}
+.oa{background:#b8843a;color:#1a1209}.oi{background:#2d2010;color:#8a7a5a}
+.ta{background:#3a4a6a;color:#c0d8f0}.ti{background:#2d2010;color:#8a7a5a}
+
+/* HISTORY */
+.fr{display:flex;gap:6px;margin-bottom:12px}
+.fb{flex:1;padding:7px;background:#2d2010;border:1px solid #3d2e14;border-radius:6px;color:#b8843a;font-size:12px;cursor:pointer;font-family:Georgia,serif}
+.fb.active{background:#b8843a;color:#1a1209}
+.ec{background:#1a1209;border:1px solid #2d2010;border-radius:10px;padding:11px;margin-bottom:8px}
+.eh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.ea{font-size:13px;font-weight:bold;color:#e8c87a;flex:1;line-height:1.4}
+.ea.tp{color:#7ac8e8}
+.em2{font-size:12px;color:#b8843a;font-weight:bold;margin-left:6px;flex-shrink:0}
+.em2.tp{color:#7a9ab8}
+.emeta{font-size:11px;color:#6a5a3a;margin-top:2px}
+.enote{font-size:11px;color:#8a7a5a;margin-top:3px;font-style:italic}
+.badge{display:inline-block;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:bold;margin-right:4px}
+.db{background:none;border:none;color:#5a3a3a;font-size:14px;cursor:pointer;padding:0 0 0 6px;flex-shrink:0}
+.empty{text-align:center;color:#6a5a3a;padding:30px 0;font-size:13px}
+
+/* SAVED */
+#saved-banner{position:fixed;bottom:65px;left:50%;transform:translateX(-50%);background:#3a6a3a;color:#a0e8a0;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:bold;z-index:100;display:none}
+#saved-banner.show{display:block}
+
+/* CONFIRM */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.cbox{background:#1a1209;border:1px solid #5a3a3a;border-radius:12px;padding:20px;max-width:300px;width:100%}
+.crow{display:flex;gap:10px;margin-top:14px}
+.cc{flex:1;padding:10px;background:#2d2010;border:1px solid #3d2e14;border-radius:8px;color:#8a7a5a;cursor:pointer;font-family:Georgia,serif;font-size:13px}
+.cd{flex:1;padding:10px;background:#5a2020;border:1px solid #8a3a3a;border-radius:8px;color:#f08080;cursor:pointer;font-family:Georgia,serif;font-size:13px;font-weight:bold}
+
+/* No mic support */
+#no-mic{background:#2a1a1a;border:1px solid #5a3a3a;border-radius:10px;padding:14px;font-size:13px;color:#f08080;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="logo">🦌</div>
+  <div style="flex:1"><div id="hdr-title">Antler Clubhouse</div><div id="hdr-sub">Material Participation · 2026</div></div>
+  <button id="csv-btn" onclick="exportCSV()">CSV</button>
+  <button id="reset-btn" onclick="askReset()">↻</button>
+</div>
+<div id="nav">
+  <button class="nb act" onclick="sw('dash')">📊 Summary</button>
+  <button class="nb" onclick="sw('log')">🎙️ Log</button>
+  <button class="nb" onclick="sw('hist')">📋 History</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="view-dash" class="sec">
+  <div id="alert-box"></div>
+  <div class="card" style="text-align:center">
+    <div class="stitle">Combined Hours — Goal: 100h</div>
+    <div class="ring-wrap">
+      <svg width="130" height="130" style="transform:rotate(-90deg)">
+        <circle cx="65" cy="65" r="59.5" fill="none" stroke="#2a2a2a" stroke-width="11"/>
+        <circle id="rc" cx="65" cy="65" r="59.5" fill="none" stroke="#e8c87a" stroke-width="11" stroke-linecap="round" stroke-dasharray="0 373.9" style="transition:stroke-dasharray .6s ease"/>
+      </svg>
+      <div class="ring-lbl">
+        <span id="ch" style="font-size:22px;font-weight:bold;color:#e8c87a;display:block">0m</span>
+        <span style="font-size:10px;color:#8a7a5a">of 100h</span>
+      </div>
+    </div>
+    <div id="cs" style="font-size:12px;color:#8a7a5a;margin-top:8px"></div>
+  </div>
+  <div class="flex2">
+    <div class="pcrd" style="border:1px solid rgba(232,200,122,.2)">
+      <div class="ring-wrap">
+        <svg width="86" height="86" style="transform:rotate(-90deg)">
+          <circle cx="43" cy="43" r="38" fill="none" stroke="#2a2a2a" stroke-width="8"/>
+          <circle id="ra" cx="43" cy="43" r="38" fill="none" stroke="#e8c87a" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 238.8" style="transition:stroke-dasharray .6s ease"/>
+        </svg>
+        <div class="ring-lbl"><span id="ap" style="font-size:13px;font-weight:bold;color:#e8c87a">0%</span></div>
+      </div>
+      <div style="font-size:10px;color:#8a7a5a;text-transform:uppercase;letter-spacing:1px;margin-top:4px">Adarsh</div>
+      <div id="at" style="font-size:15px;font-weight:bold;color:#e8c87a;margin-top:3px">0m</div>
+    </div>
+    <div class="pcrd" style="border:1px solid rgba(122,200,232,.2)">
+      <div class="ring-wrap">
+        <svg width="86" height="86" style="transform:rotate(-90deg)">
+          <circle cx="43" cy="43" r="38" fill="none" stroke="#2a2a2a" stroke-width="8"/>
+          <circle id="rae" cx="43" cy="43" r="38" fill="none" stroke="#7ac8e8" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 238.8" style="transition:stroke-dasharray .6s ease"/>
+        </svg>
+        <div class="ring-lbl"><span id="aep" style="font-size:13px;font-weight:bold;color:#7ac8e8">0%</span></div>
+      </div>
+      <div style="font-size:10px;color:#8a7a5a;text-transform:uppercase;letter-spacing:1px;margin-top:4px">Aekta</div>
+      <div id="aet" style="font-size:15px;font-weight:bold;color:#7ac8e8;margin-top:3px">0m</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stitle">Third Party Hours</div>
+    <div id="tp-summary"><div class="empty" style="padding:8px 0;font-size:12px">No third-party hours yet.</div></div>
+  </div>
+  <div class="card"><div id="stats-grid"></div></div>
+</div>
+
+<!-- LOG -->
+<div id="view-log" class="sec hidden">
+
+  <!-- Who is logging -->
+  <div class="ptog">
+    <button class="pbtn on" onclick="setP('Adarsh')" id="p-adarsh">👤 Adarsh</button>
+    <button class="pbtn off" onclick="setP('Aekta')" id="p-aekta">👤 Aekta</button>
+  </div>
+
+  <!-- Log tab toggle -->
+  <div class="tab-row">
+    <button class="tab-btn oa" onclick="setLogMode('voice')" id="lt-voice">🎙️ Voice Log</button>
+    <button class="tab-btn ti" onclick="setLogMode('tp')" id="lt-tp">🔧 3rd Party</button>
+  </div>
+
+  <!-- VOICE LOG -->
+  <div id="voice-panel">
+    <div id="no-mic" class="hidden">Your browser doesn't support voice. Try Safari on iPhone.</div>
+
+    <div id="mic-area">
+      <button id="mic-btn" class="idle" onclick="toggleMic()">🎙️</button>
+      <div id="mic-hint">Tap to speak</div>
+    </div>
+
+    <div id="transcript-box" class="placeholder">e.g. "I spent 45 minutes researching pricing on Airbnb"</div>
+
+    <div id="parsed-preview" class="hidden">
+      <div class="pp-row"><span class="pp-label">Activity</span><span class="pp-val" id="pp-act">—</span></div>
+      <div class="pp-row"><span class="pp-label">Minutes</span><span class="pp-val" id="pp-min">—</span></div>
+      <div class="pp-row"><span class="pp-label">Date</span><span class="pp-val" id="pp-date">—</span></div>
+    </div>
+
+    <!-- Editable fields shown after parse -->
+    <div id="edit-area" class="hidden">
+      <label class="fl">Activity (edit if needed)</label>
+      <input type="text" id="e-act" placeholder="What did you do?"/>
+      <label class="fl">Minutes</label>
+      <input type="number" id="e-min" placeholder="Minutes" min="1"/>
+      <label class="fl">Date</label>
+      <input type="date" id="e-date"/>
+      <label class="fl">Evidence (optional)</label>
+      <input type="text" id="e-note" placeholder="e.g. Phone log, text message, receipt..."/>
+    </div>
+
+    <button class="btn-log" id="log-btn" onclick="logEntry()" disabled>Log Entry</button>
+  </div>
+
+  <!-- 3RD PARTY PANEL -->
+  <div id="tp-panel" class="hidden">
+    <div style="font-size:12px;color:#8a7a5a;margin-bottom:12px;line-height:1.6">Track hours worked by cleaners, contractors, or anyone else. Your combined hours must stay above theirs.</div>
+    <label class="fl" style="margin-top:0">Person / Company Name</label>
+    <input type="text" id="tp-name" placeholder="e.g. Maria, Blue Bird Landscaping..."/>
+    <label class="fl">Role</label>
+    <select id="tp-role" onchange="toggleTC()">
+      <option value="">Select role...</option>
+      <option>Cleaner</option><option>Handyman</option><option>Contractor</option>
+      <option>Landscaper</option><option>Pool / Hot Tub Technician</option>
+      <option>Electrician</option><option>Plumber</option><option>Photographer</option>
+      <option>Interior Designer</option><option>Property Manager</option><option value="Other">Other</option>
+    </select>
+    <input type="text" id="tp-cr" placeholder="Describe role..." class="hidden" style="margin-top:8px"/>
+    <label class="fl">Date</label>
+    <input type="date" id="tp-date"/>
+    <label class="fl">What did they do? (optional)</label>
+    <input type="text" id="tp-act" placeholder="e.g. Full clean after checkout..."/>
+    <label class="fl">Minutes Worked</label>
+    <input type="number" id="tp-min" placeholder="Minutes" min="1"/>
+    <label class="fl">Evidence / Reference</label>
+    <input type="text" id="tp-note" placeholder="e.g. Invoice #123, Venmo payment..."/>
+    <button class="btn-t" onclick="addTE()">+ Log Their Hours</button>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="view-hist" class="sec hidden">
+  <div class="tab-row">
+    <button class="tab-btn oa" onclick="sht('owner')" id="ht-owner">👤 Owner</button>
+    <button class="tab-btn ti" onclick="sht('tp')" id="ht-tp">🔧 3rd Party</button>
+  </div>
+  <div id="hist-owner">
+    <div class="fr">
+      <button class="fb active" onclick="sf('All')" id="fa">All</button>
+      <button class="fb" onclick="sf('Adarsh')" id="fd">Adarsh</button>
+      <button class="fb" onclick="sf('Aekta')" id="fe">Aekta</button>
+    </div>
+    <div id="ohl"></div>
+  </div>
+  <div id="hist-tp" class="hidden"><div id="thl"></div></div>
+</div>
+
+<div id="saved-banner">✓ Entry saved!</div>
+<div id="reset-ov" class="overlay hidden">
+  <div class="cbox" style="border-color:#8a7a3a">
+    <div style="font-size:14px;color:#f0ece4;margin-bottom:4px;font-weight:bold">Reload from import?</div>
+    <div style="font-size:12px;color:#8a7a5a;line-height:1.5">This wipes everything currently in the app and reloads the full dataset that was imported from your Google Sheet (85.4h owner hours + third-party hours). Any entries you logged by voice <em>after</em> the import will be lost.</div>
+    <div class="crow">
+      <button class="cc" onclick="closeReset()">Cancel</button>
+      <button class="cd" style="background:#5a4a20;border-color:#8a7a3a;color:#e8c87a" onclick="doReset()">Reload</button>
+    </div>
+  </div>
+</div>
+<div id="conf-ov" class="overlay hidden">
+  <div class="cbox">
+    <div style="font-size:14px;color:#f0ece4">Delete this entry?</div>
+    <div class="crow">
+      <button class="cc" onclick="closeC()">Cancel</button>
+      <button class="cd" onclick="doD()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK='antler_hours_2026',TSK='antler_thirdparty_2026',GM=6000,CL=2*Math.PI*59.5,CS=2*Math.PI*38;
+const SEED=[{"id": 1700000000000, "person": "Adarsh", "date": "2026-03-15", "activity": "Reserching channel managers and setting up a direct booking website; looked at Lodgify and their various payment plans; researching names for the cabin. still leaning towards Antler Clubhouse", "minutes": 60, "evidenceNote": "https://get.lodgify.com/pricing; https://www.google.com/search?q=planning+to+name+our+blue+ridge+cabin+Antler+Clubhouse.+give+other+potential+names&sca_esv=8a3921a260e4e119&sxsrf=ANbL-n5pO1x1V0NbRDCcsCCUQHYGL5ZH0Q%3A1773628140452&fbs=ADc_l-aN0CWEZBOHjofHoaMMDiKpaEWjvZ2Py1XXV8d8KvlI3u6MWRtAr31GIrXLfiKhJJ9zMfgfAzmC0EaStM63-fN2fJznjTITF3FGZoxrj5LOiYMzawwK6V4mG9zl0dB2F_LD2zLcsd5_iXXlP9mmFknG9Mx5vSGkuOM1vv9tWSRmgK-EGXaZP-FthWW2gyyAkB-vNq5K4Sx7vd_Vdk9VNq5lJl0vqg&aep=1&ntc=1&sa=X&ved=2ahUKEwi-xpnar6OTAxVMl4kEHVO3BGkQ2J8OegQIBRAE&biw=1652&bih=861&dpr=2&mstk=AUtExfA5HdGB56M2He8WGuNpTyI33BDbq3V1sAMe0DZMz3fHDlaPGkKJExCdUcWolIoyXAtAuQspmvDQkm6K4izJhsutAFkpAbXVz54uJn6zE8uYnFaei9v2zmEBg5dtWAoSrAh2-QQq1caz3hXSl_G8m2kX4SC5PZO4z5brbhkWh23N-09TFEu2sUbrnFh5qLU5WABTUp9Ma7-yO9gJN9JnPH2VjufcoKV9uYrbTpnU95GJd8L4lOdtkgwMZzRJgxFknXaCTDc9gvjj1hGSuqVnZMG7MHf6YctjrvRdkcDA2h7vVOwCY2N9ofB017V1dUyuZfV1H-jVTNt25A&csuir=1&mtid=72q3afsRraCm1A_hl6ahAQ&udm=50"}, {"id": 1700000001000, "person": "Adarsh", "date": "2026-03-16", "activity": "spoke with agent about contract (Yok Re)- 17 min; spoke with 2 lenders about financing details (Max Kallos, 13 min and Alex Margulis, 27 min); submitted loan application through US Bank after consulting Aekta and discussing with her- 15 min; created a business email through gmail and business account- 10 min", "minutes": 82, "evidenceNote": "phone logs; emails; created account antlerclubhouse@gmail.com today"}, {"id": 1700000002000, "person": "Adarsh", "date": "2026-03-18", "activity": "sold funds for earnest money- 15 min; made appt and wired money at Fifth Third bank- 45 min; spoke to US bank lenders about wealth managemnt discount to decrease loan rate- 24 min", "minutes": 84, "evidenceNote": "Vanguard transaction history; wire transfer receipt"}, {"id": 1700000003000, "person": "Adarsh", "date": "2026-03-19", "activity": "looking at clearners and photographers- 30 min; finding STR insurance- 30 min", "minutes": 60, "evidenceNote": "messages to J Excellence clearning; messaged Thomas and Musa photography; messaged Burnette insurance"}, {"id": 1700000004000, "person": "Adarsh", "date": "2026-03-20", "activity": "spoke to TJ photographer- 42 min; messaged We Can cleaners- 10 min; created instagram page for cabin and worked on a logo- 45 min", "minutes": 97, "evidenceNote": "phone logs; texts; instagram page"}, {"id": 1700000005000, "person": "Adarsh", "date": "2026-03-21", "activity": "posted on IG page- 15 min; followed other accounts- 15 min; discussed photographer with wife and emailed TJ to confirm we'd like to work together- 20 min", "minutes": 50, "evidenceNote": "IG accounts; emails"}, {"id": 1700000006000, "person": "Aekta", "date": "2026-03-21", "activity": "reviewed photographer's page, his work, and spoke with Adarsh about the various packages he offers", "minutes": 20, "evidenceNote": ""}, {"id": 1700000007000, "person": "Adarsh", "date": "2026-03-22", "activity": "looked at cornhole sets- 10 min; cabin signage- 10 min; created LLC, and GA registered agent- 45 min", "minutes": 65, "evidenceNote": "Etsy history; LLC confirmation"}, {"id": 1700000008000, "person": "Adarsh", "date": "2026-03-23", "activity": "talked to landscaper Blue bird landscaping- 5 min; talked to lender team about wealth management discount- 23 min; interviewed a cleaner- 19 min, worked on logos- 30 min", "minutes": 77, "evidenceNote": "phone logs, AI logs"}, {"id": 1700000009000, "person": "Adarsh", "date": "2026-03-24", "activity": "spoke to agent about listing date for airbnb- 8 min; researching PMS platforms- 20 min", "minutes": 28, "evidenceNote": "phone log, AI log"}, {"id": 1700000010000, "person": "Adarsh", "date": "2026-03-26", "activity": "look at STR insurance options- 30 min", "minutes": 30, "evidenceNote": "AI log, emails"}, {"id": 1700000011000, "person": "Adarsh", "date": "2026-03-27", "activity": "drove up to cabin and back (for items below)", "minutes": 0, "evidenceNote": "photos, gas receipt"}, {"id": 1700000012000, "person": "Adarsh", "date": "2026-03-27", "activity": "walked around cabin with Blue Ridge Landscaping to review what improvements I wanted to make and discuss the work", "minutes": 30, "evidenceNote": "text log, proposal he sent after"}, {"id": 1700000013000, "person": "Adarsh", "date": "2026-03-27", "activity": "spoke about home inspection on site with Bruce Leopard", "minutes": 30, "evidenceNote": ""}, {"id": 1700000014000, "person": "Adarsh", "date": "2026-03-27", "activity": "spoke to US bank wealth management about loan/interest rate/wealth management options", "minutes": 18, "evidenceNote": "phone log"}, {"id": 1700000015000, "person": "Adarsh", "date": "2026-03-29", "activity": "spoke with inspector Bruce about findings- 4min; talked to agent- 6 min; negotiated what we'd want through emails- 20 min", "minutes": 30, "evidenceNote": "phone log, emails"}, {"id": 1700000016000, "person": "Adarsh", "date": "2026-04-01", "activity": "researching property management software platforms- 60 min", "minutes": 60, "evidenceNote": "emails, browser history"}, {"id": 1700000017000, "person": "Adarsh", "date": "2026-04-03", "activity": "drove up to cabin and back (for items below)", "minutes": 0, "evidenceNote": "photos (drove up from 9-1030am; drove back 230-4pm)"}, {"id": 1700000018000, "person": "Aekta", "date": "2026-04-03", "activity": "drove up to cabin and back (for items below)", "minutes": 0, "evidenceNote": "photos (drove up from 9-1030am; drove back 230-4pm)"}, {"id": 1700000019000, "person": "Adarsh", "date": "2026-04-03", "activity": "spoke to agent about listing strategy and improvements to home as we walked through entire cabin- 75 min; took a look at kitchen supply in cabinets and took photos- 20 min, assessed all furniture for defects and how comfortable they were- 45 min, interviewed a cleaner as we walked through home- 60 min, discussed level 2 charger with electrician who came to property and repalcing the neon sign- 30 min", "minutes": 230, "evidenceNote": "photos, text messages to showed vendor coordination"}, {"id": 1700000020000, "person": "Aekta", "date": "2026-04-03", "activity": "spoke to agent about listing strategy and improvements to home as we walked through entire cabin- 75 min; took a look at kitchen supply in cabinets and took photos- 20 min, assessed all furniture for defects and how comfortable they were- 45 min, interviewed a cleaner as we walked through home- 60 min, discussed level 2 charger with electrician who came to property and repalcing the neon sign- 30 min", "minutes": 230, "evidenceNote": "photos, text messages to showed vendor coordination"}, {"id": 1700000021000, "person": "Adarsh", "date": "2026-04-06", "activity": "spent time accumulating a list of things to buy for the cabin- 52 min; made operating agreement for LLC online- 20 min; spoke with US Bank about transfer of money to wealth management- 36 min; print docs and went to 5th 3rd bank to submit all documents, a 15 min drive from home- 30 min;", "minutes": 138, "evidenceNote": "screenshot attached"}, {"id": 1700000022000, "person": "Adarsh", "date": "2026-04-11", "activity": "selected a photo to market on instragram; used Claude AI to come up with caption and made a post; added hastags", "minutes": 20, "evidenceNote": "Claude AI"}, {"id": 1700000023000, "person": "Adarsh", "date": "2026-04-14", "activity": "went to bank to set up business account; set up credit card; linked card and bank account; bought paddles, balls, string lights on Amazon after researching them all", "minutes": 180, "evidenceNote": ""}, {"id": 1700000024000, "person": "Adarsh", "date": "2026-04-15", "activity": "Emailed cost seg company, spoke to cost seg company (Natalie Erasmus- 10 min); emailed another I found online", "minutes": 25, "evidenceNote": ""}, {"id": 1700000025000, "person": "Adarsh", "date": "2026-04-16", "activity": "Researched and then bought label maker for cabin to set up place for guests", "minutes": 20, "evidenceNote": ""}, {"id": 1700000026000, "person": "Adarsh", "date": "2026-04-17", "activity": "talked to another cost-seg company- Erik with Maven Cost Seg", "minutes": 15, "evidenceNote": "emails/log"}, {"id": 1700000027000, "person": "Adarsh", "date": "2026-04-18", "activity": "researched picnic tables", "minutes": 30, "evidenceNote": ""}, {"id": 1700000028000, "person": "Adarsh", "date": "2026-04-10", "activity": "bought picnic table and umbrella, umbrella base, locks, deck box (Researched all these on amazon and Wayfair first and looked through all reviews)", "minutes": 75, "evidenceNote": ""}, {"id": 1700000029000, "person": "Adarsh", "date": "2026-04-17", "activity": "researched cost seg companies, had a call with RE cost Seg, Natalie Erasmus- 10 min", "minutes": 20, "evidenceNote": ""}, {"id": 1700000030000, "person": "Adarsh", "date": "2026-04-20", "activity": "wired downpayment money at Fifth Third (9am at opening until 945am)- 45 min; closing at Merino & Associates (10am to 1130am- 90 min); looked up utility companies", "minutes": 150, "evidenceNote": ""}, {"id": 1700000031000, "person": "Adarsh", "date": "2026-04-21", "activity": "Set up bank account for transfers on Venmo (had to call Fifth Third business phone line and speak to them to get card number and create pin)- 30 min; sent money to Joey with Blue Bird Landscaping and communicated with him- 10 min; created google voice mumber for phone line- 10 min; filled out STR permit application- 10 min; worked on listing- 10 min", "minutes": 70, "evidenceNote": ""}, {"id": 1700000032000, "person": "Adarsh", "date": "2026-04-22", "activity": "Talked to county permit office for 4 min -> completed application, scanned, emailed it along with deed- 10 min total; talked to Thomas Gas company over phone for 23 min, then made an account and set up autopay- 30 min total; talked to ETC internet 7 min and then TDS for 32 min who I ultimately chose, to set up an account and have them mail the router to cabin; filled out and submitted water service application- 10 min; interview a cleaner, Cecelia over phone for 5 min and meeting her this weekend at cabin", "minutes": 94, "evidenceNote": ""}, {"id": 1700000033000, "person": "Adarsh", "date": "2026-04-23", "activity": "called TriState EMC about setting up electric service for 4 min, filled out their PDF they emailed me with business account details, called back tor 4 min to finalize service and confirm it would be set up today and pay deposit- 15 min; talked to Blue Bird Landscaping since they're at house doing work today- 6 min", "minutes": 21, "evidenceNote": ""}, {"id": 1700000034000, "person": "Adarsh", "date": "2026-04-24", "activity": "talked to Maven Cost Seg over Google Meet - 18 min; set up bank autopay- 10 min; talked to BB Landscaping- 9 min", "minutes": 37, "evidenceNote": ""}, {"id": 1700000035000, "person": "Adarsh", "date": "2026-04-25", "activity": "drove up to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000036000, "person": "Aekta", "date": "2026-04-25", "activity": "drove up to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000037000, "person": "Adarsh", "date": "2026-04-25", "activity": "on-site interview with a cleaner (Cecelia), toured home with her and discussed her cleaning strategy", "minutes": 60, "evidenceNote": ""}, {"id": 1700000038000, "person": "Aekta", "date": "2026-04-25", "activity": "on-site interview with a cleaner (Cecelia), toured home with her and discussed her cleaning strategy", "minutes": 60, "evidenceNote": ""}, {"id": 1700000039000, "person": "Adarsh", "date": "2026-04-25", "activity": "set up wifi internet, had to talk to TDS over phone for 15 min to get account setup- 40 min total", "minutes": 40, "evidenceNote": ""}, {"id": 1700000040000, "person": "Adarsh", "date": "2026-04-25", "activity": "Went to Walmart for drill, hooks, batteries for the Schlage lock and to have extras, for lightbulbs which we changed out", "minutes": 60, "evidenceNote": ""}, {"id": 1700000041000, "person": "Adarsh", "date": "2026-04-25", "activity": "set up Schlage front door lock, rest it, changed battery, sync to phone", "minutes": 25, "evidenceNote": ""}, {"id": 1700000042000, "person": "Aekta", "date": "2026-04-25", "activity": "Aekta did inventory of kitchen cabinets. Made a list. Used Claude AI to help", "minutes": 30, "evidenceNote": ""}, {"id": 1700000043000, "person": "Aekta", "date": "2026-04-25", "activity": "Aekta looked at buying kitchen items , decorative bowl, kids plates and utensils , kitchen items needing replacement", "minutes": 20, "evidenceNote": ""}, {"id": 1700000044000, "person": "Adarsh", "date": "2026-04-25", "activity": "Set up Roku doorbell camera (reset, charge it, setup on app)", "minutes": 30, "evidenceNote": ""}, {"id": 1700000045000, "person": "Adarsh", "date": "2026-04-25", "activity": "Went through cleaner closet", "minutes": 15, "evidenceNote": ""}, {"id": 1700000046000, "person": "Adarsh", "date": "2026-04-25", "activity": "Worked on photos for listing", "minutes": 20, "evidenceNote": ""}, {"id": 1700000047000, "person": "Adarsh", "date": "2026-04-26", "activity": "Used blower on all decks and patio", "minutes": 15, "evidenceNote": ""}, {"id": 1700000048000, "person": "Adarsh", "date": "2026-04-26", "activity": "on-site interview with a cleaner (Kellie Miller), toured home with her and discussed her cleaning strategy", "minutes": 60, "evidenceNote": ""}, {"id": 1700000049000, "person": "Aekta", "date": "2026-04-26", "activity": "on-site interview with a cleaner (Kellie Miller), toured home with her and discussed her cleaning strategy", "minutes": 60, "evidenceNote": ""}, {"id": 1700000050000, "person": "Adarsh", "date": "2026-04-26", "activity": "Put up main floor string lights (drill, hooks, ladder)", "minutes": 60, "evidenceNote": ""}, {"id": 1700000051000, "person": "Adarsh", "date": "2026-04-26", "activity": "Put up upstairs string lights", "minutes": 60, "evidenceNote": ""}, {"id": 1700000052000, "person": "Adarsh", "date": "2026-04-26", "activity": "reseached new pickleball paddles that were less expensive; returned old ones and lights", "minutes": 15, "evidenceNote": ""}, {"id": 1700000053000, "person": "Aekta", "date": "2026-04-26", "activity": "reseached new pickleball paddles that were less expensive; returned old ones and lights", "minutes": 15, "evidenceNote": ""}, {"id": 1700000054000, "person": "Adarsh", "date": "2026-04-26", "activity": "Listed on Airbnb, optimized details and photos; hooked up to Pricelabs", "minutes": 60, "evidenceNote": ""}, {"id": 1700000055000, "person": "Adarsh", "date": "2026-04-27", "activity": "talked to Nate about electrical work (EV charger, outlet, removing neon sign- 15 min); listed on Airbnb", "minutes": 25, "evidenceNote": ""}, {"id": 1700000056000, "person": "Adarsh", "date": "2026-04-28", "activity": "messaged 2 guests who booked; also messaged another who didn't ultimately ; optimized the listing, added checkin/checkout details", "minutes": 20, "evidenceNote": ""}, {"id": 1700000057000, "person": "Adarsh", "date": "2026-04-29", "activity": "drove up to Buford, GA to get a coctail arcade machine, carried into car, drove back- 100 min; optimized Airbnb listing; talked to landscaping company - 17 min", "minutes": 130, "evidenceNote": ""}, {"id": 1700000058000, "person": "Adarsh", "date": "2026-04-30", "activity": "optimized listing; messaged a guest inquiry", "minutes": 10, "evidenceNote": ""}, {"id": 1700000059000, "person": "Adarsh", "date": "2026-05-01", "activity": "talked to landscaping company- 24 min total; set up trash service and talked to James with the company- 7 min", "minutes": 31, "evidenceNote": ""}, {"id": 1700000060000, "person": "Adarsh", "date": "2026-05-03", "activity": "drove to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000061000, "person": "Adarsh", "date": "2026-05-03", "activity": "Walmart returns and purchases (new plants, returned hooks I didn't need)", "minutes": 45, "evidenceNote": ""}, {"id": 1700000062000, "person": "Adarsh", "date": "2026-05-03", "activity": "Set up Tesla charger and sync to app", "minutes": 15, "evidenceNote": ""}, {"id": 1700000063000, "person": "Adarsh", "date": "2026-05-03", "activity": "Organize board games in basement", "minutes": 10, "evidenceNote": ""}, {"id": 1700000064000, "person": "Adarsh", "date": "2026-05-03", "activity": "Set up plants in bathrooms for decor", "minutes": 10, "evidenceNote": ""}, {"id": 1700000065000, "person": "Adarsh", "date": "2026-05-03", "activity": "Unloaded dishwasher", "minutes": 5, "evidenceNote": ""}, {"id": 1700000066000, "person": "Adarsh", "date": "2026-05-03", "activity": "Replaced light switch plate with locking cover (so guests don't tamper with exterior camera switch)", "minutes": 10, "evidenceNote": ""}, {"id": 1700000067000, "person": "Adarsh", "date": "2026-05-03", "activity": "Measured coffee space", "minutes": 3, "evidenceNote": ""}, {"id": 1700000068000, "person": "Adarsh", "date": "2026-05-03", "activity": "Put away toilet paper in bathrooms", "minutes": 5, "evidenceNote": ""}, {"id": 1700000069000, "person": "Adarsh", "date": "2026-05-03", "activity": "Pumped up basketballs for arcade, try to change batteries", "minutes": 10, "evidenceNote": ""}, {"id": 1700000070000, "person": "Adarsh", "date": "2026-05-03", "activity": "Redid game cabinet, fixed ping-pong, paddles", "minutes": 10, "evidenceNote": ""}, {"id": 1700000071000, "person": "Adarsh", "date": "2026-05-03", "activity": "Cleanup decks and Pickleball court by blowing them", "minutes": 10, "evidenceNote": ""}, {"id": 1700000072000, "person": "Adarsh", "date": "2026-05-03", "activity": "Measured Pickleball seating space, 9' x 13' across. Measured cornhole area, 33 feet long by 11 feet across", "minutes": 15, "evidenceNote": ""}, {"id": 1700000073000, "person": "Adarsh", "date": "2026-05-03", "activity": "set up cornhole boards, took photo for marketing", "minutes": 10, "evidenceNote": ""}, {"id": 1700000074000, "person": "Adarsh", "date": "2026-05-03", "activity": "Talk to Landscaper about work so far and addition work on planters and posts and concrete for string lights- 7 min", "minutes": 7, "evidenceNote": ""}, {"id": 1700000075000, "person": "Adarsh", "date": "2026-05-03", "activity": "Carried arcade machine to basement and set it up", "minutes": 15, "evidenceNote": ""}, {"id": 1700000076000, "person": "Adarsh", "date": "2026-05-03", "activity": "Three out old owners rental things like QR codes and frames for Wi-Fi", "minutes": 5, "evidenceNote": ""}, {"id": 1700000077000, "person": "Adarsh", "date": "2026-05-03", "activity": "Set up extension cords and timer plug for main floor.", "minutes": 15, "evidenceNote": ""}, {"id": 1700000078000, "person": "Adarsh", "date": "2026-05-03", "activity": "Set up lights and extension cord and plug for upstairs deck and secured with zip ties", "minutes": 15, "evidenceNote": ""}, {"id": 1700000079000, "person": "Adarsh", "date": "2026-05-03", "activity": "Measured basement floor lights", "minutes": 10, "evidenceNote": ""}, {"id": 1700000080000, "person": "Adarsh", "date": "2026-05-03", "activity": "Set up home, including towels and toilet paper for guest next weekend", "minutes": 15, "evidenceNote": ""}, {"id": 1700000081000, "person": "Adarsh", "date": "2026-05-05", "activity": "talked to landscaper about patio space and cornhole pad", "minutes": 5, "evidenceNote": ""}, {"id": 1700000082000, "person": "Adarsh", "date": "2026-05-07", "activity": "coordinated a same-day checkin (First guest), had cleaner get cabin ready", "minutes": 20, "evidenceNote": ""}, {"id": 1700000083000, "person": "Adarsh", "date": "2026-05-08", "activity": "extensive guest messaging (with Jie) due to hot tub issue; called cleaner to fix it; called hot tub specialist to fix it, coordinated this with guest and followed-up on outcome", "minutes": 45, "evidenceNote": ""}, {"id": 1700000084000, "person": "Adarsh", "date": "2026-05-09", "activity": "guest messaging about hot tub, about check out, cleaner coordination so next guest could come that evening; messaging 2nd guest (Christine)", "minutes": 20, "evidenceNote": ""}, {"id": 1700000085000, "person": "Adarsh", "date": "2026-05-10", "activity": "guest messaging about checkout (with Christine)", "minutes": 5, "evidenceNote": ""}, {"id": 1700000086000, "person": "Adarsh", "date": "2026-05-11", "activity": "drove to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000087000, "person": "Aekta", "date": "2026-05-11", "activity": "drove to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000088000, "person": "Adarsh", "date": "2026-05-11", "activity": "Changed arcade batteries with new small screwdriver i'd bought", "minutes": 10, "evidenceNote": ""}, {"id": 1700000089000, "person": "Adarsh", "date": "2026-05-11", "activity": "Put out door mat", "minutes": 2, "evidenceNote": ""}, {"id": 1700000090000, "person": "Adarsh", "date": "2026-05-11", "activity": "Put up new bee trap, screwed into upstairs deck", "minutes": 10, "evidenceNote": ""}, {"id": 1700000091000, "person": "Adarsh", "date": "2026-05-11", "activity": "Installed basement door lock on Schlage app (reset, changed battery, sync on app)", "minutes": 25, "evidenceNote": ""}, {"id": 1700000092000, "person": "Aekta", "date": "2026-05-11", "activity": "Aekta- Set up new plastic glasses , kitchen items", "minutes": 20, "evidenceNote": ""}, {"id": 1700000093000, "person": "Adarsh", "date": "2026-05-11", "activity": "Attempted exterior camera pairing", "minutes": 30, "evidenceNote": ""}, {"id": 1700000094000, "person": "Aekta", "date": "2026-05-11", "activity": "Aekta - set up soap dispensers, emptied all old ones into new ones and used refill bottles", "minutes": 20, "evidenceNote": ""}, {"id": 1700000095000, "person": "Adarsh", "date": "2026-05-11", "activity": "messaged Hana (welcome, paddle info)", "minutes": 5, "evidenceNote": ""}, {"id": 1700000096000, "person": "Adarsh", "date": "2026-05-12", "activity": "created automatic quick replies on Airbnb, edited them", "minutes": 30, "evidenceNote": ""}, {"id": 1700000097000, "person": "Aekta", "date": "2026-05-12", "activity": "Aekta reviewed quick replies, modified them", "minutes": 15, "evidenceNote": ""}, {"id": 1700000098000, "person": "Adarsh", "date": "2026-05-14", "activity": "created guidebook with Claude AI, looked up Blue ridge details for restaurants and things to do, edited this", "minutes": 45, "evidenceNote": ""}, {"id": 1700000099000, "person": "Aekta", "date": "2026-05-14", "activity": "Aekta reviewed guidebook, suggested edits", "minutes": 20, "evidenceNote": ""}, {"id": 1700000100000, "person": "Adarsh", "date": "2026-05-14", "activity": "set guidebook to guest (Amy + Christopher), messaged with them", "minutes": 5, "evidenceNote": ""}, {"id": 1700000101000, "person": "Adarsh", "date": "2026-05-14", "activity": "messaged Jaaron with our guidebook", "minutes": 5, "evidenceNote": ""}, {"id": 1700000102000, "person": "Adarsh", "date": "2026-05-15", "activity": "spoke with photographer (TJ) about photoshoot details next weekend", "minutes": 25, "evidenceNote": ""}, {"id": 1700000103000, "person": "Adarsh", "date": "2026-05-15", "activity": "spoke with landscaper about posts in planters, for string lights", "minutes": 2, "evidenceNote": ""}, {"id": 1700000104000, "person": "Adarsh", "date": "2026-05-15", "activity": "drove to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000105000, "person": "Aekta", "date": "2026-05-15", "activity": "drove to cabin and back (for items below)", "minutes": 0, "evidenceNote": ""}, {"id": 1700000106000, "person": "Adarsh", "date": "2026-05-15", "activity": "Set up new high chair, new kitchen items, kids plates and utensils", "minutes": 30, "evidenceNote": ""}, {"id": 1700000107000, "person": "Aekta", "date": "2026-05-15", "activity": "Set up new high chair, new kitchen items, kids plates and utensils", "minutes": 30, "evidenceNote": ""}, {"id": 1700000108000, "person": "Adarsh", "date": "2026-05-15", "activity": "printed cabin info sheet and placed into frame in basement drawer", "minutes": 10, "evidenceNote": ""}, {"id": 1700000109000, "person": "Adarsh", "date": "2026-05-16", "activity": "Put up exterior sign with chain links, troubleshooted a missing piece", "minutes": 30, "evidenceNote": ""}, {"id": 1700000110000, "person": "Adarsh", "date": "2026-05-16", "activity": "Installed basement patio string lights", "minutes": 60, "evidenceNote": ""}, {"id": 1700000111000, "person": "Adarsh", "date": "2026-05-16", "activity": "Installed cornhole string lights along 10 foot wooden posts", "minutes": 120, "evidenceNote": ""}, {"id": 1700000112000, "person": "Adarsh", "date": "2026-05-16", "activity": "setup extension cords from lights to outlet", "minutes": 30, "evidenceNote": ""}, {"id": 1700000113000, "person": "Aekta", "date": "2026-05-16", "activity": "Aekta - washed, dried, and put away ikea lids plates and utensils, same for Rubbermaid tuperware", "minutes": 60, "evidenceNote": ""}, {"id": 1700000114000, "person": "Aekta", "date": "2026-05-16", "activity": "Aekta- went to Walmart for additional kitchen items (tea strainer, bottled water, firewood; also outdoor plug protectors)- 1245pm- 2pm", "minutes": 75, "evidenceNote": ""}, {"id": 1700000115000, "person": "Adarsh", "date": "2026-05-16", "activity": "Built picnic table for pickelball court and placed umbrella in it (unboxed packages, followed instruction manual, used drills/tools and provided hardware)- 230pm to 530pm", "minutes": 180, "evidenceNote": ""}, {"id": 1700000116000, "person": "Aekta", "date": "2026-05-16", "activity": "Built picnic table for pickelball court and placed umbrella in it (unboxed packages, followed instruction manual, used drills/tools and provided hardware)- 230pm to 530pm", "minutes": 180, "evidenceNote": ""}, {"id": 1700000117000, "person": "Adarsh", "date": "2026-05-16", "activity": "Protected extension cord connections with plug protector; buried cord going to outlet with staples and under dirt/rocks", "minutes": 60, "evidenceNote": ""}, {"id": 1700000118000, "person": "Adarsh", "date": "2026-05-17", "activity": "Buried internet cord under rocks so guests dont trip on it (side of cabin)", "minutes": 30, "evidenceNote": ""}, {"id": 1700000119000, "person": "Adarsh", "date": "2026-05-17", "activity": "installed firepit lights (took down old ones, placed hooks and new lights along 8 foot posts); connected to extension cord and then to Alexa timer - 930am-1130am", "minutes": 120, "evidenceNote": ""}, {"id": 1700000120000, "person": "Adarsh", "date": "2026-05-17", "activity": "set up new ping pong paddles in mesh container", "minutes": 15, "evidenceNote": ""}, {"id": 1700000121000, "person": "Adarsh", "date": "2026-05-17", "activity": "Moved grill to main floor deck and re-connected to propane tank", "minutes": 30, "evidenceNote": ""}, {"id": 1700000122000, "person": "Aekta", "date": "2026-05-17", "activity": "Moved grill to main floor deck", "minutes": 30, "evidenceNote": ""}, {"id": 1700000123000, "person": "Adarsh", "date": "2026-05-17", "activity": "Deck box in backyard (attempted to setup lock system by pickleball court which didn't fit in lock hole; moved deck box to backyard and placed cornhole bags and frisbee inside)", "minutes": 30, "evidenceNote": ""}, {"id": 1700000124000, "person": "Aekta", "date": "2026-05-17", "activity": "Aekta- put away books and toys in basement cabinet and organized it", "minutes": 30, "evidenceNote": ""}, {"id": 1700000125000, "person": "Aekta", "date": "2026-05-17", "activity": "Aekta- used label maker for kitchen cabinets", "minutes": 30, "evidenceNote": ""}, {"id": 1700000126000, "person": "Adarsh", "date": "2026-05-17", "activity": "used label maker for pickelball equipment and arcade machine", "minutes": 30, "evidenceNote": ""}, {"id": 1700000127000, "person": "Aekta", "date": "2026-05-17", "activity": "Aekta- used label maker for pickelball equipment and arcade machine", "minutes": 30, "evidenceNote": ""}, {"id": 1700000128000, "person": "Adarsh", "date": "2026-05-16", "activity": "booking confirmation messages to Suzy, Cory, Kris", "minutes": 15, "evidenceNote": ""}, {"id": 1700000129000, "person": "Adarsh", "date": "2026-05-18", "activity": "mesaging with Caelyn, Nicole, Kim, Jason", "minutes": 20, "evidenceNote": ""}, {"id": 1700000130000, "person": "Adarsh", "date": "2026-05-20", "activity": "made list for Kellie on what additional items to clean, staging for photographer, what items we still need to buy", "minutes": 45, "evidenceNote": "Apple Notes"}, {"id": 1700000131000, "person": "Aekta", "date": "2026-05-20", "activity": "made list for Kellie on what additional items to clean, staging for photographer, what items we still need to buy", "minutes": 45, "evidenceNote": ""}, {"id": 1700000132000, "person": "Adarsh", "date": "2026-05-21", "activity": "communicated Joey landscaper on his progress throughout the day, what was needed, what he had to buy from Home Depot", "minutes": 30, "evidenceNote": ""}, {"id": 1700000133000, "person": "Adarsh", "date": "2026-05-22", "activity": "edited customizations, min stays, base price on Pricelabs given decreased bookings in last few days", "minutes": 30, "evidenceNote": ""}];
+const TP_SEED=[{"id": 1800000000000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-04-22", "activity": "bought plants, started retaining wall work in backyard", "minutes": 480, "evidenceNote": "text 4/24/26"}, {"id": 1800000001000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-04-27", "activity": "worked more on retaining wall, filled with dirt, built drainage", "minutes": 464, "evidenceNote": "Roku camera footage"}, {"id": 1800000002000, "name": "Nate", "role": "Electrician", "date": "2026-04-27", "activity": "installed Level 2 EV charger, made outlet on deck for string lights, removed neon sign", "minutes": 360, "evidenceNote": "Roku camera footage"}, {"id": 1800000003000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-04-29", "activity": "retaiing wall, steps", "minutes": 300, "evidenceNote": ""}, {"id": 1800000004000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-04-30", "activity": "retaining wall, steps, gravel, firepit", "minutes": 420, "evidenceNote": ""}, {"id": 1800000005000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-05-01", "activity": "Pickleball patio, plants, flowers", "minutes": 420, "evidenceNote": ""}, {"id": 1800000006000, "name": "Kellie", "role": "Cleaner", "date": "2026-05-07", "activity": "inventory on closet, hot tub, got place ready for a guest (unlocked front door 11:25am- locked it 1:44pm)", "minutes": 139, "evidenceNote": "door lock history"}, {"id": 1800000007000, "name": "Melissa", "role": "Cleaner", "date": "2026-05-08", "activity": "made visit to repair hot tub", "minutes": 60, "evidenceNote": ""}, {"id": 1800000008000, "name": "Allen", "role": "Pool / Hot Tub Technician", "date": "2026-05-08", "activity": "made visit to repair hot tub", "minutes": 30, "evidenceNote": ""}, {"id": 1800000009000, "name": "Melissa", "role": "Cleaner", "date": "2026-05-09", "activity": "cabin turnover", "minutes": 180, "evidenceNote": ""}, {"id": 1800000010000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-05-11", "activity": "concrete in planters, posts in planters", "minutes": 180, "evidenceNote": ""}, {"id": 1800000011000, "name": "Kellie", "role": "Cleaner", "date": "2026-05-12", "activity": "deep clean (10:59am to 2:20pm)", "minutes": 201, "evidenceNote": "door lock history"}, {"id": 1800000012000, "name": "Kellie", "role": "Cleaner", "date": "2026-05-14", "activity": "deep clean (10:59am to 2:20pm)", "minutes": 231, "evidenceNote": ""}, {"id": 1800000013000, "name": "Another Cleaner", "role": "Cleaner", "date": "2026-05-14", "activity": "deep clean (10:59am to 2:20pm)", "minutes": 231, "evidenceNote": ""}, {"id": 1800000014000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-05-15", "activity": "concrete in last 4 planters by firepit", "minutes": 60, "evidenceNote": ""}, {"id": 1800000015000, "name": "Kellie", "role": "Cleaner", "date": "2026-05-20", "activity": "cabin turnover", "minutes": 221, "evidenceNote": "door lock history"}, {"id": 1800000016000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-05-21", "activity": "soil + flowers in all planters", "minutes": 120, "evidenceNote": ""}, {"id": 1800000017000, "name": "Joey (Blue Bird Landscaping)", "role": "Landscaper", "date": "2026-05-22", "activity": "hot tub drain pipe in ground", "minutes": 30, "evidenceNote": ""}];
+
+let entries=[],tpE=[],cv='dash',cp='Adarsh',cf='All',cht='owner',pdId=null,pdT=null;
+let recognition=null,listening=false,logMode='voice';
+
+// ── STORAGE ──
+function load(){
+  try{entries=JSON.parse(localStorage.getItem(SK)||'null')}catch{entries=null}
+  if(!entries||entries.length===0){entries=JSON.parse(JSON.stringify(SEED));localStorage.setItem(SK,JSON.stringify(entries))}
+  try{tpE=JSON.parse(localStorage.getItem(TSK)||'null')}catch{tpE=null}
+  if(!tpE||tpE.length===0){tpE=JSON.parse(JSON.stringify(TP_SEED));localStorage.setItem(TSK,JSON.stringify(tpE))}
+}
+function save(){localStorage.setItem(SK,JSON.stringify(entries));localStorage.setItem(TSK,JSON.stringify(tpE))}
+
+// ── UTILS ──
+function fm(m){m=Math.round(m);const h=Math.floor(m/60),r=m%60;if(!h)return r+'m';if(!r)return h+'h';return h+'h '+r+'m'}
+function fd(iso){return new Date(iso+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function td(){return new Date().toISOString().split('T')[0]}
+function tf(n){return entries.filter(e=>e.person===n).reduce((s,e)=>s+e.minutes,0)}
+function gtt(){const t={};tpE.forEach(e=>{t[e.name]=(t[e.name]||0)+e.minutes});return t}
+function gtp(){return[...new Set(tpE.map(e=>e.name))]}
+
+// ── NAV ──
+function sw(v){
+  ['dash','log','hist'].forEach(id=>document.getElementById('view-'+id).classList.toggle('hidden',id!==v));
+  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('act',['dash','log','hist'][i]===v));
+  cv=v;if(v==='dash')rd();if(v==='hist')rh();
+}
+
+// ── PERSON ──
+function setP(p){
+  cp=p;
+  document.getElementById('p-adarsh').className='pbtn '+(p==='Adarsh'?'on':'off');
+  document.getElementById('p-aekta').className='pbtn '+(p==='Aekta'?'on':'off');
+}
+
+// ── LOG MODE ──
+function setLogMode(m){
+  logMode=m;
+  document.getElementById('voice-panel').classList.toggle('hidden',m!=='voice');
+  document.getElementById('tp-panel').classList.toggle('hidden',m!=='tp');
+  document.getElementById('lt-voice').className='tab-btn '+(m==='voice'?'oa':'oi');
+  document.getElementById('lt-tp').className='tab-btn '+(m==='tp'?'ta':'ti');
+}
+
+// ── VOICE / SPEECH RECOGNITION ──
+function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('no-mic').classList.remove('hidden');return false}
+  recognition=new SR();
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.lang='en-US';
+
+  recognition.onstart=()=>{
+    listening=true;
+    const b=document.getElementById('mic-btn');
+    b.className='listening';b.textContent='⏹';
+    document.getElementById('mic-hint').textContent='Listening... tap to stop';
+    document.getElementById('transcript-box').className='';
+    document.getElementById('transcript-box').textContent='';
+  };
+
+  recognition.onresult=(e)=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    document.getElementById('transcript-box').textContent=(final||interim).trim();
+  };
+
+  recognition.onend=()=>{
+    listening=false;
+    const b=document.getElementById('mic-btn');
+    b.className='processing';b.textContent='⏳';
+    document.getElementById('mic-hint').textContent='Processing...';
+    const text=document.getElementById('transcript-box').textContent.trim();
+    if(text)parseTranscript(text);
+    else resetMic();
+  };
+
+  recognition.onerror=(e)=>{
+    listening=false;resetMic();
+    if(e.error!=='no-speech')document.getElementById('transcript-box').textContent='Could not hear you. Try again.';
+  };
+  return true;
+}
+
+function toggleMic(){
+  if(!recognition&&!initSpeech())return;
+  if(listening){recognition.stop()}
+  else{
+    resetParsed();
+    recognition.start();
+  }
+}
+
+function resetMic(){
+  const b=document.getElementById('mic-btn');
+  b.className='idle';b.textContent='🎙️';
+  document.getElementById('mic-hint').textContent='Tap to speak';
+}
+
+// ── PARSE TRANSCRIPT ──
+// Extract minutes and activity from natural speech
+function parseTranscript(text){
+  // Find minutes - handles "45 minutes", "an hour", "30 mins", "1 hour 30 minutes", "1.5 hours" etc
+  let minutes=null;
+  const t=text.toLowerCase();
+
+  // "X hours and Y minutes" or "X hours Y minutes"
+  const hmMatch=t.match(/(\d+(?:\.\d+)?)\s*hours?\s*(?:and\s*)?(\d+)\s*min/);
+  if(hmMatch)minutes=Math.round(parseFloat(hmMatch[1])*60+parseInt(hmMatch[2]));
+
+  // "X.5 hours" or "X hours"
+  if(!minutes){const hMatch=t.match(/(\d+(?:\.\d+)?)\s*hours?/);if(hMatch)minutes=Math.round(parseFloat(hMatch[1])*60)}
+
+  // "X minutes" or "X mins"
+  if(!minutes){const mMatch=t.match(/(\d+)\s*min/);if(mMatch)minutes=parseInt(mMatch[1])}
+
+  // "half an hour"
+  if(!minutes&&t.includes('half an hour'))minutes=30;
+  if(!minutes&&t.includes('half hour'))minutes=30;
+  if(!minutes&&t.includes('quarter hour'))minutes=15;
+
+  // Remove the time part from text to get activity
+  let activity=text
+    .replace(/\b(?:i\s+)?spent\b/gi,'')
+    .replace(/\b(?:for\s+)?\d+(?:\.\d+)?\s*hours?\s*(?:and\s*)?\d*\s*(?:min(?:ute)?s?)?\b/gi,'')
+    .replace(/\b(?:for\s+)?\d+(?:\.\d+)?\s*hours?\b/gi,'')
+    .replace(/\b(?:for\s+)?\d+\s*min(?:ute)?s?\b/gi,'')
+    .replace(/\bhalf\s+an?\s+hour\b/gi,'')
+    .replace(/\bquarter\s+(?:of\s+an?\s+)?hour\b/gi,'')
+    .replace(/\b(today|yesterday|this morning|this afternoon|this evening)\b/gi,'')
+    .replace(/\s{2,}/g,' ')
+    .replace(/^[,\s]+|[,\s]+$/g,'')
+    .trim();
+
+  // Capitalize first letter
+  if(activity)activity=activity.charAt(0).toUpperCase()+activity.slice(1);
+
+  // Show parsed result
+  document.getElementById('pp-act').textContent=activity||'(not detected)';
+  document.getElementById('pp-min').textContent=minutes?minutes+' minutes':'(not detected)';
+  document.getElementById('pp-date').textContent=fd(td());
+  document.getElementById('parsed-preview').classList.remove('hidden');
+
+  // Pre-fill edit fields
+  document.getElementById('e-act').value=activity||'';
+  document.getElementById('e-min').value=minutes||'';
+  document.getElementById('e-date').value=td();
+  document.getElementById('edit-area').classList.remove('hidden');
+
+  // Enable log button if we have both
+  document.getElementById('log-btn').disabled=!(activity&&minutes);
+
+  resetMic();
+}
+
+function resetParsed(){
+  document.getElementById('parsed-preview').classList.add('hidden');
+  document.getElementById('edit-area').classList.add('hidden');
+  document.getElementById('log-btn').disabled=true;
+  document.getElementById('transcript-box').className='placeholder';
+  document.getElementById('transcript-box').textContent='e.g. "I spent 45 minutes researching pricing on Airbnb"';
+}
+
+// ── LOG ENTRY ──
+function logEntry(){
+  const act=document.getElementById('e-act').value.trim();
+  const m=parseInt(document.getElementById('e-min').value);
+  const date=document.getElementById('e-date').value||td();
+  const note=document.getElementById('e-note').value.trim();
+  if(!act||!m||m<=0){alert('Please fill in activity and minutes.');return}
+  entries.unshift({id:Date.now(),person:cp,date,activity:act,minutes:m,evidenceNote:note});
+  save();resetParsed();
+  document.getElementById('e-note').value='';
+  document.getElementById('transcript-box').className='placeholder';
+  document.getElementById('transcript-box').textContent='e.g. "I spent 45 minutes researching pricing on Airbnb"';
+  showS('✓ Logged '+fm(m)+' for '+cp+'!');
+  if(cv==='dash')rd();
+}
+
+// ── 3RD PARTY ──
+function toggleTC(){document.getElementById('tp-cr').classList.toggle('hidden',document.getElementById('tp-role').value!=='Other')}
+function addTE(){
+  const name=document.getElementById('tp-name').value.trim();
+  const role=document.getElementById('tp-role').value==='Other'?document.getElementById('tp-cr').value.trim():document.getElementById('tp-role').value;
+  const m=parseInt(document.getElementById('tp-min').value);
+  const act=document.getElementById('tp-act').value.trim();
+  if(!name||!role||!m||m<=0){alert('Please fill in name, role, and minutes.');return}
+  tpE.unshift({id:Date.now(),name,role,date:document.getElementById('tp-date').value||td(),activity:act||role,minutes:m,evidenceNote:document.getElementById('tp-note').value.trim()});
+  save();
+  ['tp-name','tp-cr','tp-act','tp-min','tp-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tp-role').value='';document.getElementById('tp-cr').classList.add('hidden');
+  showS();if(cv==='dash')rd();
+}
+
+// ── DELETE ──
+function confirmDel(id,t){pdId=id;pdT=t;document.getElementById('conf-ov').classList.remove('hidden')}
+function closeC(){document.getElementById('conf-ov').classList.add('hidden');pdId=null;pdT=null}
+function doD(){
+  if(pdT==='owner')entries=entries.filter(e=>e.id!==pdId);
+  else tpE=tpE.filter(e=>e.id!==pdId);
+  save();closeC();rd();rh();
+}
+
+// ── SAVED BANNER ──
+function showS(msg){const b=document.getElementById('saved-banner');b.textContent=msg||'✓ Entry saved!';b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2500)}
+
+// ── DASHBOARD ──
+function rd(){
+  const a=tf('Adarsh'),ae=tf('Aekta'),c=a+ae,tt=gtt(),tp=gtp();
+  const tr={};tpE.forEach(e=>{tr[e.name]=e.role});
+  const hm=tp.length>0?Math.max(...tp.map(n=>tt[n]||0)):0;
+  const hn=[...tp].sort((a,b)=>(tt[b]||0)-(tt[a]||0))[0];
+  const lead=c-hm;
+
+  let ah='';
+  if(hn){
+    if(lead<0)ah=`<div class="ad"><div class="al">⚠️ Action Required</div><div class="at"><strong>${hn}</strong> is ahead by <strong>${fm(-lead)}</strong>. Log <strong>${fm(-lead+1)}</strong> more.</div></div>`;
+    else if(lead<120)ah=`<div class="aw"><div class="al">⚡ Heads Up</div><div class="at">You lead <strong>${hn}</strong> by only <strong>${fm(lead)}</strong> — keep logging!</div></div>`;
+    else ah=`<div class="ag"><div class="al">✓ You're Leading</div><div class="at">You lead <strong>${hn}</strong> by <strong>${fm(lead)}</strong>.</div></div>`;
+  }
+  document.getElementById('alert-box').innerHTML=ah;
+
+  const pct=Math.min(c/GM,1),d=CL*pct,rf=document.getElementById('rc');
+  rf.setAttribute('stroke-dasharray',d+' '+CL);rf.setAttribute('stroke',c>=GM?'#7aba7a':'#e8c87a');
+  document.getElementById('ch').textContent=fm(c);document.getElementById('ch').style.color=c>=GM?'#7aba7a':'#e8c87a';
+  document.getElementById('cs').textContent=c>=GM?'✓ Goal reached!':fm(GM-c)+' to reach 100h goal';
+  document.getElementById('cs').style.color=c>=GM?'#7aba7a':'#8a7a5a';
+
+  document.getElementById('ra').setAttribute('stroke-dasharray',(CS*Math.min(a/GM,1))+' '+CS);
+  document.getElementById('ap').textContent=Math.round((a/GM)*100)+'%';
+  document.getElementById('at').textContent=fm(a);
+  document.getElementById('rae').setAttribute('stroke-dasharray',(CS*Math.min(ae/GM,1))+' '+CS);
+  document.getElementById('aep').textContent=Math.round((ae/GM)*100)+'%';
+  document.getElementById('aet').textContent=fm(ae);
+
+  const tpDiv=document.getElementById('tp-summary');
+  if(tp.length===0){tpDiv.innerHTML='<div class="empty" style="padding:8px 0;font-size:12px">No third-party hours yet. Log them in the Log tab.</div>'}
+  else{
+    const mx=Math.max(c,hm,1);
+    tpDiv.innerHTML=[...tp].sort((a,b)=>(tt[b]||0)-(tt[a]||0)).map(nm=>{
+      const mn=tt[nm]||0,ov=mn>c,bw=Math.round((mn/mx)*100),ow=Math.round((c/mx)*100);
+      return`<div class="tpbw"><div class="tpbt"><div><span class="tpn${ov?' ov':''}">${nm}</span><span class="tpr">${tr[nm]||''}</span></div><span class="tph${ov?' ov':''}">${fm(mn)}</span></div><div class="bt"><div class="bf${ov?' ov':''}" style="width:${bw}%"></div></div><div class="bt"><div class="bo" style="width:${ow}%"></div></div><div class="tps${ov?' ov':''}">${ov?'⚠️ Exceeds you by '+fm(mn-c):'You lead by '+fm(c-mn)}</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('stats-grid').innerHTML=[
+    ['Combined Hours',fm(c)],['100h Goal',c>=GM?'✓ Reached':fm(GM-c)+' to go'],
+    ['Adarsh',fm(a)],['Aekta',fm(ae)],
+    ['Top 3rd Party',hn?hn+': '+fm(hm):'—'],['Your Lead',hn?(lead>=0?'+':'')+fm(lead):'—'],
+    ['Owner Entries',entries.length],['3rd Party Entries',tpE.length],
+  ].map(([k,v])=>`<div class="stat-row"><span>${k}</span><span class="sv">${v}</span></div>`).join('');
+}
+
+// ── HISTORY ──
+function sht(t){
+  cht=t;
+  document.getElementById('hist-owner').classList.toggle('hidden',t!=='owner');
+  document.getElementById('hist-tp').classList.toggle('hidden',t!=='tp');
+  document.getElementById('ht-owner').className='tab-btn '+(t==='owner'?'oa':'oi');
+  document.getElementById('ht-tp').className='tab-btn '+(t==='tp'?'ta':'ti');
+  rh();
+}
+function sf(f){
+  cf=f;
+  ['All','Adarsh','Aekta'].forEach(x=>{
+    const id=x==='All'?'fa':x==='Adarsh'?'fd':'fe';
+    document.getElementById(id).classList.toggle('active',x===f);
+  });
+  rh();
+}
+function rh(){
+  const ol=document.getElementById('ohl');
+  let fl=cf==='All'?entries:entries.filter(e=>e.person===cf);
+  fl=[...fl].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  ol.innerHTML=fl.length===0?'<div class="empty">No entries yet.</div>':fl.map(e=>{
+    const bc=e.person==='Adarsh'?'#e8c87a':'#7ac8e8';
+    return`<div class="ec"><div class="eh"><div class="ea">${e.activity}</div><div class="em2">${fm(e.minutes)}</div><button class="db" onclick="confirmDel(${e.id},'owner')">🗑</button></div><div class="emeta"><span class="badge" style="background:${bc}22;color:${bc}">${e.person}</span>${fd(e.date)}</div>${e.evidenceNote?`<div class="enote">"${e.evidenceNote}"</div>`:''}</div>`;
+  }).join('');
+  const tl=document.getElementById('thl');
+  const ts=[...tpE].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  tl.innerHTML=ts.length===0?'<div class="empty">No third-party entries yet.</div>':ts.map(e=>`<div class="ec"><div class="eh"><div class="ea tp">${e.name}</div><div class="em2 tp">${fm(e.minutes)}</div><button class="db" onclick="confirmDel(${e.id},'tp')">🗑</button></div><div class="emeta"><span class="badge" style="background:#7a9ab822;color:#7a9ab8">${e.role}</span>${fd(e.date)}${e.activity&&e.activity!==e.role?' · '+e.activity:''}</div>${e.evidenceNote?`<div class="enote">"${e.evidenceNote}"</div>`:''}</div>`).join('');
+}
+
+// ── CSV ──
+function exportCSV(){
+  const h='Type,Person,Role,Date,Activity,Minutes,Hours,Evidence\n';
+  const or=entries.map(e=>`"Owner","${e.person}","Owner","${e.date}","${e.activity}",${e.minutes},${(e.minutes/60).toFixed(2)},"${(e.evidenceNote||'').replace(/"/g,'""')}"`);
+  const tr=tpE.map(e=>`"Third Party","${e.name}","${e.role}","${e.date}","${e.activity}",${e.minutes},${(e.minutes/60).toFixed(2)},"${(e.evidenceNote||'').replace(/"/g,'""')}"`);
+  const blob=new Blob([h+[...or,...tr].join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='antler_2026.csv';a.click();
+}
+
+// ── RESET / RELOAD FROM IMPORT ──
+function askReset(){document.getElementById('reset-ov').classList.remove('hidden')}
+function closeReset(){document.getElementById('reset-ov').classList.add('hidden')}
+function doReset(){
+  entries=JSON.parse(JSON.stringify(SEED));
+  tpE=JSON.parse(JSON.stringify(TP_SEED));
+  save();
+  closeReset();
+  rd();rh();
+  showS('\u2713 Reloaded from import!');
+  sw('dash');
+}
+
+// ── INIT ──
+load();
+document.getElementById('tp-date').value=td();
+// Listen for edits to enable/disable log button
+['e-act','e-min'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  const a=document.getElementById('e-act').value.trim();
+  const m=parseInt(document.getElementById('e-min').value);
+  document.getElementById('log-btn').disabled=!(a&&m>0);
+}));
+rd();
+</script>
+</body>
+</html>
