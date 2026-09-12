@@ -207,6 +207,8 @@
     <div class="header-actions">
       <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
       <button class="btn btn-gold" onclick="exportCPA()">📋 CPA Summary</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('restore-file').click()">↺ Restore backup</button>
+      <input type="file" id="restore-file" accept=".csv" style="display:none;" onchange="restoreBackup(event)">
     </div>
   </div>
 </header>
@@ -537,7 +539,8 @@
         split: [
           { cat: 'Mortgage interest', amount: 2507.00, note: 'Mortgage interest — ESTIMATE, true up to 1098 at year-end' },
           { cat: 'Mortgage principal (non-deductible)', amount: 601.64, note: 'Principal — cash flow only, not deductible' },
-          { cat: 'Taxes (property/lodging)', amount: 463.79, note: 'Monthly escrow — incl. property tax + insurance; CPA to allocate' }
+          { cat: 'Taxes (property/lodging)', amount: 199.58, note: 'Escrow — property tax portion (est. from lender disbursement schedule)' },
+          { cat: 'Insurance', amount: 264.21, note: 'Escrow — insurance portion (est. from lender disbursement schedule)' }
         ]
       }
     ];
@@ -1264,6 +1267,62 @@
       .map(e => [e.date, e.type, e.cat, e.desc, e.notes||'', e.part||'', (e.type==='expense'?-e.amount:e.amount).toFixed(2)].map(csvCell).join(','));
     downloadFile('antler-ledger-export.csv', head.join(',') + '\n' + rows.join('\n'));
     toast('Exported full ledger as CSV.');
+  }
+
+  function restoreBackup(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      let rows;
+      try { rows = parseCSVText(e.target.result); }
+      catch (err) { toast('Could not read that file.'); return; }
+      if (!rows || rows.length < 2) { toast('That backup looks empty.'); return; }
+      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const iDate = headers.indexOf('date');
+      const iType = headers.indexOf('type');
+      const iCat  = headers.indexOf('category');
+      const iDesc = headers.indexOf('description');
+      const iNote = headers.indexOf('notes');
+      const iPart = headers.indexOf('participation');
+      const iAmt  = headers.indexOf('amount');
+      if (iDate < 0 || iAmt < 0 || iCat < 0) {
+        toast('This doesn\u2019t look like an Antler Ledger export (missing Date/Category/Amount).');
+        return;
+      }
+      const imported = [];
+      rows.slice(1).forEach(r => {
+        const rawAmt = cleanNum(r[iAmt]);
+        if (isNaN(rawAmt)) return;
+        let type = iType >= 0 && r[iType] ? r[iType].trim().toLowerCase() : (rawAmt < 0 ? 'expense' : 'income');
+        if (type !== 'income' && type !== 'expense') type = rawAmt < 0 ? 'expense' : 'income';
+        imported.push({
+          id: uid(),
+          date: (r[iDate]||'').trim(),
+          type,
+          cat: (r[iCat]||'Other').trim(),
+          amount: Math.abs(rawAmt),
+          desc: iDesc >= 0 ? (r[iDesc]||'').trim() : '(restored)',
+          notes: iNote >= 0 ? (r[iNote]||'').trim() : '',
+          part: iPart >= 0 ? (r[iPart]||'').trim() : '',
+          review: false
+        });
+      });
+      if (!imported.length) { toast('No valid rows found in that file.'); return; }
+      const doReplace = ledger.length === 0 ||
+        confirm(`Restore ${imported.length} transactions from backup?\n\nOK = REPLACE everything currently in the ledger with the backup.\nCancel = ADD the backup on top of what's here (may create duplicates).`);
+      if (doReplace) {
+        ledger = imported;
+      } else {
+        ledger = ledger.concat(imported);
+      }
+      saveLedger();
+      refreshAll();
+      document.getElementById('restore-file').value = '';
+      toast(`Restored ${imported.length} transactions.`);
+      switchTab('transactions');
+    };
+    reader.readAsText(file);
   }
 
   function exportCPA() {
