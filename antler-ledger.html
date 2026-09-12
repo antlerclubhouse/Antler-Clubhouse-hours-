@@ -209,6 +209,7 @@
       <button class="btn btn-gold" onclick="exportCPA()">📋 CPA Summary</button>
       <button class="btn btn-ghost" onclick="document.getElementById('restore-file').click()">↺ Restore backup</button>
       <input type="file" id="restore-file" accept=".csv" style="display:none;" onchange="restoreBackup(event)">
+      <button class="btn btn-ghost" onclick="fixDates()" title="Repair date formats">🔧 Fix dates</button>
     </div>
   </div>
 </header>
@@ -1269,6 +1270,35 @@
     toast('Exported full ledger as CSV.');
   }
 
+  function fixDates() {
+    if (!ledger.length) { toast('No transactions to fix.'); return; }
+    // Detect yearless dates (e.g. "7/28") and re-normalize everything.
+    const yearless = ledger.filter(e => /^\d{1,2}[\/\-]\d{1,2}$/.test((e.date||'').trim())).length;
+    let assumeYear = null;
+    if (yearless) {
+      assumeYear = prompt(`${yearless} transactions have dates with no year (like "7/28"). What year should they be? (e.g. 2026)`, '2026');
+      if (assumeYear === null) return;
+      assumeYear = assumeYear.trim();
+      if (!/^\d{4}$/.test(assumeYear)) { toast('Enter a 4-digit year.'); return; }
+    }
+    let fixed = 0;
+    ledger.forEach(e => {
+      const orig = (e.date||'').trim();
+      let nd;
+      if (/^\d{1,2}[\/\-]\d{1,2}$/.test(orig)) {
+        // yearless: prepend assumed year
+        const parts = orig.split(/[\/\-]/);
+        nd = `${assumeYear}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+      } else {
+        nd = normDate(orig);
+      }
+      if (nd && nd !== orig) { e.date = nd; fixed++; }
+    });
+    saveLedger();
+    refreshAll();
+    toast(`Fixed ${fixed} date${fixed===1?'':'s'}. Check the Monthly tab now.`);
+  }
+
   function restoreBackup(ev) {
     const file = ev.target.files[0];
     if (!file) return;
@@ -1298,7 +1328,7 @@
         if (type !== 'income' && type !== 'expense') type = rawAmt < 0 ? 'expense' : 'income';
         imported.push({
           id: uid(),
-          date: (r[iDate]||'').trim(),
+          date: normDate((r[iDate]||'').trim()),
           type,
           cat: (r[iCat]||'Other').trim(),
           amount: Math.abs(rawAmt),
